@@ -1,54 +1,53 @@
 import copy
 import numpy
 
-all_matrix = []
-all_matrix_number = []
+qty_bulb_min = 9999999
+all_matriz = []
+numero_de_bombillos = []
 
-all_matrix_checked = []
+matriz = []
+# matriz_file = open("matriz_enana.txt", "r")
 
-matrix = []
-# matrix_file = open("matriz_enana.txt", "r")
-matrix_file = open("matriz.txt", "r")
-# matrix_file = open("matriz_grande.txt", "r")
-for line in matrix_file:
-    matrix.append([number for number in line[:-1]])
+# Leer el caso de prueba
+matriz_file = open("matriz.txt", "r")
+# matriz_file = open("matriz_grande.txt", "r")
+for line in matriz_file:
+    matriz.append([number for number in line[:-1]])
 
-def print_matrix(matrix):
-    for x_pos in range(0, len(matrix)-1):
-        for y_pos in range(0, len(matrix[x_pos])-1):
-            print(matrix[x_pos][y_pos], end='')
-        print("\n")
+def imprimir_matriz(matriz):
+    for x_pos in range(0, len(matriz)-1):
+        for y_pos in range(0, len(matriz[x_pos])-1):
+            print(matriz[x_pos][y_pos], end='')
+        print()
 
-def contain_zeros(matrix):
-    for row in matrix:
+def contain_zeros(matriz):
+    for row in matriz:
         if "0" in row:
             return True
     return False
 
-def exist_matrix(matrix):
-    if matrix in all_matrix:
+def exist_matriz(matriz):
+    global qty_bulb_min
+    if matriz in all_matriz:
         return True
-    print_matrix(matrix)
-    print("*************")
-    matrix_in_numpy = numpy.matrix(matrix)
-    qty_bulb = numpy.count_nonzero(matrix_in_numpy == 'B')
-    all_matrix.append(matrix)
-    all_matrix_number.append(qty_bulb)
+    matriz_in_numpy = numpy.matrix(matriz)
+    qty_bulb = numpy.count_nonzero(matriz_in_numpy == 'B')
+    all_matriz.append(matriz)
+    numero_de_bombillos.append(qty_bulb)
+    if qty_bulb < qty_bulb_min:
+        qty_bulb_min = qty_bulb
     return False
 
-
-def was_checked(posx, posy, matrix):
-    matrix_in_numpy = numpy.matrix(matrix)
-    for m in all_matrix_checked:
-        if m[0] == posx and m[1] == posy and (matrix_in_numpy == m[2]).all():
-            return True
+def current_bulb_is_minor(matriz):
+    global qty_bulb_min
+    matriz_in_numpy = numpy.matrix(matriz)
+    qty_bulb = numpy.count_nonzero(matriz_in_numpy == 'B')
+    if qty_bulb < qty_bulb_min:
+        return True
     return False
 
-def save_like_checked(posx, posy, matrix):
-    all_matrix_checked.append((posx, posy, matrix))
-
-def alumbrar(matrix, x_pos, y_pos):
-    matrix[x_pos][y_pos] = "B"
+def alumbrar(matriz, x_pos, y_pos):
+    matriz[x_pos][y_pos] = "B"
     x = x_pos -1
     y = y_pos - 1
     y_wall = False
@@ -57,52 +56,55 @@ def alumbrar(matrix, x_pos, y_pos):
     y_1 = y_pos + 1
     x_wall_1 = False
     y_wall_1 = False
-    while(x > -1 or y > -1 or x_1 < len(matrix)):
-        if y > -1 and not x_wall and matrix[x_pos][y] == "0":
-            matrix[x_pos][y] = "L"
+    while(x > -1 or y > -1 or x_1 < len(matriz)):
+        if y > -1 and not x_wall and matriz[x_pos][y] == "0":
+            matriz[x_pos][y] = "L"
         y -= 1
-        if y > -1 and matrix[x_pos][y] == "1":
+        if y > -1 and matriz[x_pos][y] == "1":
             x_wall = True
 
-        if x > -1 and not y_wall and matrix[x][y_pos] == "0":
-            matrix[x][y_pos] = "L"
+        if x > -1 and not y_wall and matriz[x][y_pos] == "0":
+            matriz[x][y_pos] = "L"
         x -= 1
-        if x > -1 and matrix[x][y_pos] == "1":
+        if x > -1 and matriz[x][y_pos] == "1":
             y_wall = True
 
-        if x_1 < len(matrix) and matrix[x_1][y_pos] == "0" and not x_wall_1:
-            matrix[x_1][y_pos] = "L"
+        if x_1 < len(matriz) and matriz[x_1][y_pos] == "0" and not x_wall_1:
+            matriz[x_1][y_pos] = "L"
         x_1 += 1
-        if x_1 < len(matrix) and matrix[x_1][y_pos] == "1":
+        if x_1 < len(matriz) and matriz[x_1][y_pos] == "1":
             x_wall_1 = True
 
-        if y_1 < len(matrix[x_pos]) and matrix[x_pos][y_1] == "0" and not y_wall_1:
-            matrix[x_pos][y_1] = "L"
+        if y_1 < len(matriz[x_pos]) and matriz[x_pos][y_1] == "0" and not y_wall_1:
+            matriz[x_pos][y_1] = "L"
         y_1 += 1
-        if y_1 < len(matrix[x_pos]) and matrix[x_pos][y_1] == "1":
+        if y_1 < len(matriz[x_pos]) and matriz[x_pos][y_1] == "1":
             y_wall_1 = True
 
-def put_bulb(matrix):
+def put_bulb(matriz):
     is_full = False
-    for x_pos in range(len(matrix)):
-        for y_pos in range(len(matrix[x_pos])):
-            if matrix[x_pos][y_pos] == "0":
+    for x_pos in range(len(matriz)):
+        for y_pos in range(len(matriz[x_pos])):
+            if matriz[x_pos][y_pos] == "0":
 
-                matrix_cache = copy.deepcopy(matrix)
-                alumbrar(matrix, x_pos, y_pos)
+                matriz_cache = copy.deepcopy(matriz)
+                alumbrar(matriz, x_pos, y_pos)
 
-                if not contain_zeros(matrix):
-                    exist_matrix(matrix)
+                if not contain_zeros(matriz):
+                    exist_matriz(matriz)
                     is_full = True
                     break
                 else:
-                    put_bulb(matrix)
-                    matrix = matrix_cache
+                    if current_bulb_is_minor(matriz):
+                        put_bulb(matriz)
+                    matriz = matriz_cache
         if is_full:
             break
 
-put_bulb(matrix)
-from pprint import pprint
-for i in range(len(all_matrix_number)):
-    pprint(all_matrix_number[i])
-    pprint(all_matrix[i])
+put_bulb(matriz)
+
+for i in range(len(numero_de_bombillos)):
+    if numero_de_bombillos[i] == qty_bulb_min:
+        print(numero_de_bombillos[i])
+        imprimir_matriz(matriz)
+        print()

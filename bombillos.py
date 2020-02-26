@@ -1,110 +1,169 @@
 import copy
 import numpy
 
-qty_bulb_min = 9999999
-all_matriz = []
-numero_de_bombillos = []
+# Aqui se guardara la menor cantidad de bombillos
+# usados hasta el momento en una de las soluciones
+# encontradas.
+MINIMO_DE_BOMBILLOS = 9999999
 
-matriz = []
-# matriz_file = open("matriz_enana.txt", "r")
+# Se guardaran las posibles soluciones en forma de matriz
+# para luego escoger la o las que usen menor cantidad
+# de bombillos
+POSIBLES_SOLUCIONES = []
+
+# Cantidad de bombillos que tiene la matriz en el array
+# POSIBLES_SOLUCIONES. La matriz POSIBLES_SOLUCIONES[i]
+# tendra la cantidad de bombillos NUMERO_DE_BOMBILLOS[i].
+NUMERO_DE_BOMBILLOS = []
 
 # Leer el caso de prueba
-matriz_file = open("matriz.txt", "r")
-# matriz_file = open("matriz_grande.txt", "r")
-for line in matriz_file:
-    matriz.append([number for number in line[:-1]])
+MATRIZ = []
+for line in open("matriz.txt", "r"):
+    MATRIZ.append([number for number in line[:-1]])
+
 
 def imprimir_matriz(matriz):
-    for x_pos in range(0, len(matriz)-1):
-        for y_pos in range(0, len(matriz[x_pos])-1):
-            print(matriz[x_pos][y_pos], end='')
-        print()
+    """ Imprime la matriz un poco decente.
+    """
+    for posx in range(len(matriz)-1):
+        print(matriz[posx])
 
-def contain_zeros(matriz):
-    for row in matriz:
-        if "0" in row:
+
+def contiene_ceros(matriz):
+    """ Comprobar si la matriz todavia tiene
+    habitaciones oscuras.
+    """
+    for fila in matriz:
+        if "0" in fila:
             return True
     return False
 
-def exist_matriz(matriz):
-    global qty_bulb_min
-    if matriz in all_matriz:
+
+def guardar_matriz(matriz):
+    """ La matriz que se recibe ya tiene todas
+    las habitaciones alumbradas. Entonces, en este
+    metodo se quiere guardar la matriz entre las
+    posibles soluciones mas optimas. Para luego
+    escoger la mejor.
+    """
+    global MINIMO_DE_BOMBILLOS
+    if matriz in POSIBLES_SOLUCIONES:
         return True
     matriz_in_numpy = numpy.matrix(matriz)
-    qty_bulb = numpy.count_nonzero(matriz_in_numpy == 'B')
-    all_matriz.append(matriz)
-    numero_de_bombillos.append(qty_bulb)
-    if qty_bulb < qty_bulb_min:
-        qty_bulb_min = qty_bulb
+    cantidad_bombillos = numpy.count_nonzero(matriz_in_numpy == 'B')
+    POSIBLES_SOLUCIONES.append(matriz)
+    NUMERO_DE_BOMBILLOS.append(cantidad_bombillos)
+    # Se guarda cual ha sido la menor cantidad de bombillos
+    # usados en una matriz con todas las habitaciones
+    # iluminadas
+    if cantidad_bombillos < MINIMO_DE_BOMBILLOS:
+        MINIMO_DE_BOMBILLOS = cantidad_bombillos
     return False
 
-def current_bulb_is_minor(matriz):
-    global qty_bulb_min
+
+def chequear_bombillos(matriz):
+    """ Si la cantidad de bombillos usados
+    en la matriz que recibimos es mayor
+    a la mejor solucion encontrada hasta ahora
+    entonces se retorna False para que no se siga
+    recorriendo esa matriz
+    """
+    global MINIMO_DE_BOMBILLOS
     matriz_in_numpy = numpy.matrix(matriz)
-    qty_bulb = numpy.count_nonzero(matriz_in_numpy == 'B')
-    if qty_bulb < qty_bulb_min:
+    cantidad_bombillos = numpy.count_nonzero(matriz_in_numpy == 'B')
+    if cantidad_bombillos < MINIMO_DE_BOMBILLOS:
         return True
     return False
 
-def alumbrar(matriz, x_pos, y_pos):
-    matriz[x_pos][y_pos] = "B"
-    x = x_pos -1
-    y = y_pos - 1
-    y_wall = False
-    x_wall = False
-    x_1 = x_pos + 1
-    y_1 = y_pos + 1
-    x_wall_1 = False
-    y_wall_1 = False
-    while(x > -1 or y > -1 or x_1 < len(matriz)):
-        if y > -1 and not x_wall and matriz[x_pos][y] == "0":
-            matriz[x_pos][y] = "L"
-        y -= 1
-        if y > -1 and matriz[x_pos][y] == "1":
-            x_wall = True
 
-        if x > -1 and not y_wall and matriz[x][y_pos] == "0":
-            matriz[x][y_pos] = "L"
-        x -= 1
-        if x > -1 and matriz[x][y_pos] == "1":
-            y_wall = True
+def alumbrar_habitaciones(matriz, posx, posy):
+    """ Al encontrar una habitacion sin bombillo
+    se procede a colocar uno y alumbrar las habitaciones
+    que pueda alcanzar a alumbrar.
+    """
+    matriz[posx][posy] = "B"
+    posx_iter = posx - 1
+    posy_iter = posy - 1
+    y_pared_1 = False
+    x_pared_1 = False
+    posx_iter_2 = posx + 1
+    posy_iter_2 = posy + 1
+    x_pared_2 = False
+    y_pared_2 = False
+    # Sorry si no se entiende este codigo, la verdad, antes eran
+    # 4 ciclos for, pero decidi hacerlo en un while para mejorar
+    # los tiempos. Estoy alumbrando las habitaciones y si ya
+    # llegue al final en alguna direccion, entonces marco los booleanos
+    # como que ya llegue a la pared para que ya no siga recorriendo
+    # en esa direccion
+    while(posx_iter > -1 or posy_iter > -1 or posx_iter_2 < len(matriz)):
+        if posy_iter > -1 and not x_pared_1 and matriz[posx][posy_iter] == "0":
+            matriz[posx][posy_iter] = "L"
+        if posy_iter > -1 and matriz[posx][posy_iter] == "1":
+            x_pared_1 = True
+        posy_iter -= 1
 
-        if x_1 < len(matriz) and matriz[x_1][y_pos] == "0" and not x_wall_1:
-            matriz[x_1][y_pos] = "L"
-        x_1 += 1
-        if x_1 < len(matriz) and matriz[x_1][y_pos] == "1":
-            x_wall_1 = True
+        if posx_iter > -1 and not y_pared_1 and matriz[posx_iter][posy] == "0":
+            matriz[posx_iter][posy] = "L"
+        if posx_iter > -1 and matriz[posx_iter][posy] == "1":
+            y_pared_1 = True
+        posx_iter -= 1
 
-        if y_1 < len(matriz[x_pos]) and matriz[x_pos][y_1] == "0" and not y_wall_1:
-            matriz[x_pos][y_1] = "L"
-        y_1 += 1
-        if y_1 < len(matriz[x_pos]) and matriz[x_pos][y_1] == "1":
-            y_wall_1 = True
+        if (posx_iter_2 < len(matriz) and
+                matriz[posx_iter_2][posy] == "0" and not x_pared_2):
+            matriz[posx_iter_2][posy] = "L"
+        if posx_iter_2 < len(matriz) and matriz[posx_iter_2][posy] == "1":
+            x_pared_2 = True
+        posx_iter_2 += 1
 
-def put_bulb(matriz):
-    is_full = False
-    for x_pos in range(len(matriz)):
-        for y_pos in range(len(matriz[x_pos])):
-            if matriz[x_pos][y_pos] == "0":
+        if (posy_iter_2 < len(matriz[posx]) and
+                matriz[posx][posy_iter_2] == "0" and not y_pared_2):
+            matriz[posx][posy_iter_2] = "L"
+        if (posy_iter_2 < len(matriz[posx]) and
+                matriz[posx][posy_iter_2] == "1"):
+            y_pared_2 = True
+        posy_iter_2 += 1
 
+
+def buscar_bombillos_optimos(matriz):
+    """ Backtracking donde se revisa todas las soluciones
+    posibles para encontrar la solucion optima. Cada vez
+    que se encuentra una habitacion oscura, entonces,
+    se procede a alumbrarla y a seguir revisando donde
+    hay habitaciones oscuras para alumbrarlas hasta que
+    todo este iluminado e ir guardando las soluciones mas
+    optimas.
+    """
+    for posx in range(len(matriz)):
+        for posy in range(len(matriz[posx])):
+            if matriz[posx][posy] == "0":
+                # Se guarda la matriz antes de alumbrarla
+                # para que al seguir con el ciclo, se siga
+                # con la matriz sin alumbrar
                 matriz_cache = copy.deepcopy(matriz)
-                alumbrar(matriz, x_pos, y_pos)
+                alumbrar_habitaciones(matriz, posx, posy)
+                if not contiene_ceros(matriz):
+                    # Si no hay ceros, guardamos la solucion
+                    # encontrada.
+                    guardar_matriz(matriz)
+                elif chequear_bombillos(matriz):
+                    # Si la matriz ha usado menos bombillos
+                    # que la solucion mas optima hasta el
+                    # momento, entonces seguimos recorriendo
+                    buscar_bombillos_optimos(matriz)
+                matriz = matriz_cache
 
-                if not contain_zeros(matriz):
-                    exist_matriz(matriz)
-                    is_full = True
-                    break
-                else:
-                    if current_bulb_is_minor(matriz):
-                        put_bulb(matriz)
-                    matriz = matriz_cache
-        if is_full:
-            break
+# Llamada al backtracking
+buscar_bombillos_optimos(MATRIZ)
 
-put_bulb(matriz)
+# Imprimir todas las soluciones con la menor
+# cantidad de bombillos
+print("B: Las habitaciones que tienen bombillo.\n"
+      "L: Las habitaciones que tienen luz por algun bombillo.\n"
+      "1: Las habitaciones con paredes.\n")
 
-for i in range(len(numero_de_bombillos)):
-    if numero_de_bombillos[i] == qty_bulb_min:
-        print(numero_de_bombillos[i])
-        imprimir_matriz(matriz)
+for i in range(len(NUMERO_DE_BOMBILLOS)):
+    if NUMERO_DE_BOMBILLOS[i] == MINIMO_DE_BOMBILLOS:
+        print("Bombillos usados: ", NUMERO_DE_BOMBILLOS[i])
+        imprimir_matriz(MATRIZ)
         print()

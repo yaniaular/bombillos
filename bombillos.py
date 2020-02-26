@@ -2,6 +2,8 @@ import copy
 import numpy
 
 all_matrix = []
+all_matrix_number = []
+
 all_matrix_checked = []
 
 matrix = []
@@ -18,18 +20,21 @@ def print_matrix(matrix):
         print("\n")
 
 def contain_zeros(matrix):
-    matrix_in_numpy = numpy.matrix(matrix)
-    if numpy.count_nonzero(matrix_in_numpy == '0') == 0:
-        return False
-    return True
+    for row in matrix:
+        if "0" in row:
+            return True
+    return False
 
 def exist_matrix(matrix):
+    if matrix in all_matrix:
+        return True
+    print_matrix(matrix)
+    print("*************")
     matrix_in_numpy = numpy.matrix(matrix)
-    for m in all_matrix:
-        if (matrix_in_numpy == m[1]).all():
-            return True
     qty_bulb = numpy.count_nonzero(matrix_in_numpy == 'B')
-    all_matrix.append((qty_bulb, matrix_in_numpy))
+    all_matrix.append(matrix)
+    all_matrix_number.append(qty_bulb)
+    return False
 
 
 def was_checked(posx, posy, matrix):
@@ -42,6 +47,41 @@ def was_checked(posx, posy, matrix):
 def save_like_checked(posx, posy, matrix):
     all_matrix_checked.append((posx, posy, matrix))
 
+def alumbrar(matrix, x_pos, y_pos):
+    matrix[x_pos][y_pos] = "B"
+    x = x_pos -1
+    y = y_pos - 1
+    y_wall = False
+    x_wall = False
+    x_1 = x_pos + 1
+    y_1 = y_pos + 1
+    x_wall_1 = False
+    y_wall_1 = False
+    while(x > -1 or y > -1 or x_1 < len(matrix)):
+        if y > -1 and not x_wall and matrix[x_pos][y] == "0":
+            matrix[x_pos][y] = "L"
+        y -= 1
+        if y > -1 and matrix[x_pos][y] == "1":
+            x_wall = True
+
+        if x > -1 and not y_wall and matrix[x][y_pos] == "0":
+            matrix[x][y_pos] = "L"
+        x -= 1
+        if x > -1 and matrix[x][y_pos] == "1":
+            y_wall = True
+
+        if x_1 < len(matrix) and matrix[x_1][y_pos] == "0" and not x_wall_1:
+            matrix[x_1][y_pos] = "L"
+        x_1 += 1
+        if x_1 < len(matrix) and matrix[x_1][y_pos] == "1":
+            x_wall_1 = True
+
+        if y_1 < len(matrix[x_pos]) and matrix[x_pos][y_1] == "0" and not y_wall_1:
+            matrix[x_pos][y_1] = "L"
+        y_1 += 1
+        if y_1 < len(matrix[x_pos]) and matrix[x_pos][y_1] == "1":
+            y_wall_1 = True
+
 def put_bulb(matrix):
     is_full = False
     for x_pos in range(len(matrix)):
@@ -49,45 +89,20 @@ def put_bulb(matrix):
             if matrix[x_pos][y_pos] == "0":
 
                 matrix_cache = copy.deepcopy(matrix)
-
-                matrix[x_pos][y_pos] = "B"
-                for fill in range(y_pos+1, len(matrix[x_pos])):
-                    if matrix[x_pos][fill] == "0":
-                        matrix[x_pos][fill] = "L"
-                    elif matrix[x_pos][fill] == "1":
-                        break
-
-                for fill in range(y_pos-1, -1, -1):
-                    if matrix[x_pos][fill] == "0":
-                        matrix[x_pos][fill] = "L"
-                    elif matrix[x_pos][fill] == "1":
-                        break
-
-                for fill in range(x_pos+1, len(matrix)):
-                    if matrix[fill][y_pos] == "0":
-                        matrix[fill][y_pos] = "L"
-                    elif matrix[fill][y_pos] == "1":
-                        break
-
-                for fill in range(x_pos-1, -1, -1):
-                    if matrix[fill][y_pos] == "0":
-                        matrix[fill][y_pos] = "L"
-                    elif matrix[fill][y_pos] == "1":
-                        break
+                alumbrar(matrix, x_pos, y_pos)
 
                 if not contain_zeros(matrix):
                     exist_matrix(matrix)
                     is_full = True
                     break
                 else:
-                    # if not was_checked(x_pos, y_pos, matrix):
                     put_bulb(matrix)
                     matrix = matrix_cache
-                    # save_like_checked(x_pos, y_pos, matrix)
         if is_full:
             break
 
 put_bulb(matrix)
-
 from pprint import pprint
-print(pprint(all_matrix))
+for i in range(len(all_matrix_number)):
+    pprint(all_matrix_number[i])
+    pprint(all_matrix[i])

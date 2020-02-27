@@ -1,5 +1,6 @@
 import copy
 import numpy
+import sys
 
 # Aqui se guardara la menor cantidad de bombillos
 # usados hasta el momento en una de las soluciones
@@ -9,23 +10,26 @@ MINIMO_DE_BOMBILLOS = 9999999
 # Se guardaran las posibles soluciones en forma de matriz
 # para luego escoger la o las que usen menor cantidad
 # de bombillos
-POSIBLES_SOLUCIONES = []
+POSIBLES_SOLUCIONES = set()
 
 # Cantidad de bombillos que tiene la matriz en el array
 # POSIBLES_SOLUCIONES. La matriz POSIBLES_SOLUCIONES[i]
 # tendra la cantidad de bombillos NUMERO_DE_BOMBILLOS[i].
 NUMERO_DE_BOMBILLOS = []
 
+REVISADAS = set()
+
+
 # Leer el caso de prueba
 MATRIZ = []
-for line in open("matriz.txt", "r"):
+for line in open(sys.argv[1], "r"):
     MATRIZ.append([number for number in line[:-1]])
 
 
 def imprimir_matriz(matriz):
     """ Imprime la matriz un poco decente.
     """
-    for posx in range(len(matriz)-1):
+    for posx in range(len(matriz)):
         print(matriz[posx])
 
 
@@ -38,8 +42,12 @@ def contiene_ceros(matriz):
             return True
     return False
 
+def esta_revisada(matriz):
+    if matriz in REVISADAS:
+        return True
+    return False
 
-def guardar_matriz(matriz):
+def guardar_matriz(matriz, matriz_tupla):
     """ La matriz que se recibe ya tiene todas
     las habitaciones alumbradas. Entonces, en este
     metodo se quiere guardar la matriz entre las
@@ -47,11 +55,11 @@ def guardar_matriz(matriz):
     escoger la mejor.
     """
     global MINIMO_DE_BOMBILLOS
-    if matriz in POSIBLES_SOLUCIONES:
+    if matriz_tupla in POSIBLES_SOLUCIONES:
         return True
+    POSIBLES_SOLUCIONES.add(matriz_tupla)
     matriz_in_numpy = numpy.matrix(matriz)
     cantidad_bombillos = numpy.count_nonzero(matriz_in_numpy == 'B')
-    POSIBLES_SOLUCIONES.append(matriz)
     NUMERO_DE_BOMBILLOS.append(cantidad_bombillos)
     # Se guarda cual ha sido la menor cantidad de bombillos
     # usados en una matriz con todas las habitaciones
@@ -134,6 +142,8 @@ def buscar_bombillos_optimos(matriz):
     todo este iluminado e ir guardando las soluciones mas
     optimas.
     """
+    global REVISADAS
+    revisada = False
     for posx in range(len(matriz)):
         for posy in range(len(matriz[posx])):
             if matriz[posx][posy] == "0":
@@ -142,16 +152,25 @@ def buscar_bombillos_optimos(matriz):
                 # con la matriz sin alumbrar
                 matriz_cache = copy.deepcopy(matriz)
                 alumbrar_habitaciones(matriz, posx, posy)
-                if not contiene_ceros(matriz):
+                matriz_tupla = tuple([tuple(habitacion) for habitacion in matriz])
+                if not contiene_ceros(matriz_tupla):
                     # Si no hay ceros, guardamos la solucion
                     # encontrada.
-                    guardar_matriz(matriz)
+                    guardar_matriz(matriz, matriz_tupla)
                 elif chequear_bombillos(matriz):
                     # Si la matriz ha usado menos bombillos
                     # que la solucion mas optima hasta el
                     # momento, entonces seguimos recorriendo
-                    buscar_bombillos_optimos(matriz)
+                    if not esta_revisada(matriz_tupla):
+                        buscar_bombillos_optimos(matriz)
+                        REVISADAS.add(matriz_tupla)
+                    else:
+                        revisada = True
                 matriz = matriz_cache
+            if revisada:
+                break
+        if revisada:
+            break
 
 # Llamada al backtracking
 buscar_bombillos_optimos(MATRIZ)
@@ -162,8 +181,5 @@ print("B: Las habitaciones que tienen bombillo.\n"
       "L: Las habitaciones que tienen luz por algun bombillo.\n"
       "1: Las habitaciones con paredes.\n")
 
-for i in range(len(NUMERO_DE_BOMBILLOS)):
-    if NUMERO_DE_BOMBILLOS[i] == MINIMO_DE_BOMBILLOS:
-        print("Bombillos usados: ", NUMERO_DE_BOMBILLOS[i])
-        imprimir_matriz(MATRIZ)
-        print()
+print("Bombillos usados: ", NUMERO_DE_BOMBILLOS[-1])
+imprimir_matriz(list(POSIBLES_SOLUCIONES)[-1])

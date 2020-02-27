@@ -12,13 +12,11 @@ MINIMO_DE_BOMBILLOS = 9999999
 # de bombillos
 POSIBLES_SOLUCIONES = set()
 
-# Cantidad de bombillos que tiene la matriz en el array
-# POSIBLES_SOLUCIONES. La matriz POSIBLES_SOLUCIONES[i]
-# tendra la cantidad de bombillos NUMERO_DE_BOMBILLOS[i].
-NUMERO_DE_BOMBILLOS = []
-
+# Las matrices que ya fueron revisadas se guardan acá
 REVISADAS = set()
 
+# Aquí se guardará la matriz más óptima hasta el momento
+MATRIZ_OPTIMA = []
 
 # Leer el caso de prueba
 MATRIZ = []
@@ -42,12 +40,14 @@ def contiene_ceros(matriz):
             return True
     return False
 
+
 def esta_revisada(matriz):
     if matriz in REVISADAS:
         return True
     return False
 
-def guardar_matriz(matriz, matriz_tupla):
+
+def guardar_matriz(matriz, matriz_in_numpy, matriz_tupla):
     """ La matriz que se recibe ya tiene todas
     las habitaciones alumbradas. Entonces, en este
     metodo se quiere guardar la matriz entre las
@@ -55,21 +55,21 @@ def guardar_matriz(matriz, matriz_tupla):
     escoger la mejor.
     """
     global MINIMO_DE_BOMBILLOS
+    global MATRIZ_OPTIMA
     if matriz_tupla in POSIBLES_SOLUCIONES:
         return True
     POSIBLES_SOLUCIONES.add(matriz_tupla)
-    matriz_in_numpy = numpy.matrix(matriz)
     cantidad_bombillos = numpy.count_nonzero(matriz_in_numpy == 'B')
-    NUMERO_DE_BOMBILLOS.append(cantidad_bombillos)
     # Se guarda cual ha sido la menor cantidad de bombillos
     # usados en una matriz con todas las habitaciones
     # iluminadas
     if cantidad_bombillos < MINIMO_DE_BOMBILLOS:
         MINIMO_DE_BOMBILLOS = cantidad_bombillos
+        MATRIZ_OPTIMA = matriz
     return False
 
 
-def chequear_bombillos(matriz):
+def chequear_bombillos(matriz_in_numpy):
     """ Si la cantidad de bombillos usados
     en la matriz que recibimos es mayor
     a la mejor solucion encontrada hasta ahora
@@ -77,7 +77,6 @@ def chequear_bombillos(matriz):
     recorriendo esa matriz
     """
     global MINIMO_DE_BOMBILLOS
-    matriz_in_numpy = numpy.matrix(matriz)
     cantidad_bombillos = numpy.count_nonzero(matriz_in_numpy == 'B')
     if cantidad_bombillos < MINIMO_DE_BOMBILLOS:
         return True
@@ -153,11 +152,12 @@ def buscar_bombillos_optimos(matriz):
                 matriz_cache = copy.deepcopy(matriz)
                 alumbrar_habitaciones(matriz, posx, posy)
                 matriz_tupla = tuple([tuple(habitacion) for habitacion in matriz])
+                matriz_in_numpy = numpy.matrix(matriz)
                 if not contiene_ceros(matriz_tupla):
                     # Si no hay ceros, guardamos la solucion
                     # encontrada.
-                    guardar_matriz(matriz, matriz_tupla)
-                elif chequear_bombillos(matriz):
+                    guardar_matriz(matriz, matriz_in_numpy, matriz_tupla)
+                elif chequear_bombillos(matriz_in_numpy):
                     # Si la matriz ha usado menos bombillos
                     # que la solucion mas optima hasta el
                     # momento, entonces seguimos recorriendo
@@ -181,5 +181,13 @@ print("B: Las habitaciones que tienen bombillo.\n"
       "L: Las habitaciones que tienen luz por algun bombillo.\n"
       "1: Las habitaciones con paredes.\n")
 
-print("Bombillos usados: ", NUMERO_DE_BOMBILLOS[-1])
-imprimir_matriz(list(POSIBLES_SOLUCIONES)[-1])
+print("Bombillos usados: ", MINIMO_DE_BOMBILLOS)
+for item in MATRIZ_OPTIMA:
+    for item2 in item:
+        if item2 == "1":
+            sys.stdout.write("\033[1;30;40m%s\033[m" % item2)
+        elif item2 == "L":
+            sys.stdout.write("\033[2;30;43m%s\033[m" % item2)
+        else:
+            sys.stdout.write("\033[1;33;43m%s\033[m" % item2)
+    print()
